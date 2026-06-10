@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BNB Dev Toolkit — BSC Testnet Developer Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:       #080b10;
+  --s1:       #0d1117;
+  --s2:       #111822;
+  --s3:       #161e2e;
+  --border:   #1c2538;
+  --border2:  #253044;
+  --bnb:      #F0B90B;
+  --bnb2:     #c99608;
+  --bnb-glow: rgba(240,185,11,0.15);
+  --green:    #22c55e;
+  --red:      #ef4444;
+  --amber:    #f59e0b;
+  --blue:     #3b82f6;
+  --purple:   #a855f7;
+  --text:     #c5d0e6;
+  --dim:      #5a6a8a;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Inter', sans-serif;
+  --radius:   10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* SCANLINE OVERLAY */
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+  pointer-events:none;z-index:9999;
+}
+
+/* GRID */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(240,185,11,0.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(240,185,11,0.025) 1px,transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;z-index:0;
+}
+
+.wrap{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:0 24px;}
+
+/* ━━━━ SIDEBAR LAYOUT ━━━━ */
+.app-shell{
+  display:flex;
+  min-height:100vh;
+}
+
+/* SIDEBAR */
+.sidebar{
+  width:220px;
+  flex-shrink:0;
+  background:var(--s1);
+  border-right:1px solid var(--border);
+  position:fixed;
+  top:0;left:0;bottom:0;
+  display:flex;
+  flex-direction:column;
+  z-index:100;
+  overflow-y:auto;
+}
+.sidebar-logo{
+  padding:20px 18px 16px;
+  border-bottom:1px solid var(--border);
+}
+.logo-mark{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:6px;
+}
+.logo-hex{
+  width:32px;height:32px;
+  background:var(--bnb);
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-weight:700;font-size:11px;color:#000;
+  flex-shrink:0;
+}
+.logo-name{
+  font-family:var(--mono);font-size:13px;font-weight:700;color:#fff;
+}
+.logo-chain{
+  font-family:var(--mono);font-size:10px;color:var(--bnb);
+  background:rgba(240,185,11,0.08);
+  border:1px solid rgba(240,185,11,0.2);
+  padding:2px 8px;border-radius:3px;
+  display:inline-block;
+}
+
+.nav-section{
+  padding:14px 10px 6px;
+}
+.nav-label{
+  font-family:var(--mono);font-size:9px;color:var(--dim);
+  text-transform:uppercase;letter-spacing:1.5px;
+  padding:0 8px;margin-bottom:6px;
+}
+.nav-item{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 10px;
+  border-radius:7px;
+  cursor:pointer;
+  transition:all 0.15s;
+  color:var(--dim);
+  font-size:13px;
+  font-weight:500;
+  border:1px solid transparent;
+  margin-bottom:2px;
+}
+.nav-item:hover{color:var(--text);background:var(--s2);}
+.nav-item.active{
+  color:var(--bnb);
+  background:rgba(240,185,11,0.08);
+  border-color:rgba(240,185,11,0.2);
+}
+.nav-icon{font-size:15px;flex-shrink:0;}
+.nav-badge{
+  margin-left:auto;
+  font-family:var(--mono);font-size:9px;
+  padding:2px 6px;border-radius:3px;
+}
+.nav-badge.new{background:rgba(34,197,94,0.15);color:var(--green);}
+.nav-badge.live{background:rgba(59,130,246,0.15);color:var(--blue);}
+
+.sidebar-footer{
+  margin-top:auto;
+  padding:14px;
+  border-top:1px solid var(--border);
+  font-family:var(--mono);font-size:10px;color:var(--dim);
+  line-height:1.6;
+}
+
+/* MAIN CONTENT */
+.main-content{
+  margin-left:220px;
+  flex:1;
+  min-width:0;
+}
+
+/* TOP BAR */
+.topbar{
+  background:var(--s1);
+  border-bottom:1px solid var(--border);
+  padding:12px 28px;
+  display:flex;align-items:center;
+  justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+  flex-wrap:wrap;gap:10px;
+}
+.topbar-breadcrumb{
+  font-family:var(--mono);font-size:12px;color:var(--dim);
+}
+.topbar-breadcrumb span{color:var(--bnb);}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.network-badge{
+  display:flex;align-items:center;gap:6px;
+  background:var(--s2);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:5px 12px;
+  font-family:var(--mono);font-size:11px;color:var(--text);
+}
+.net-dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 6px var(--green);
+  animation:glow 2s infinite;}
+@keyframes glow{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+/* PANELS */
+.panel{display:none;padding:28px;}
+.panel.active{display:block;}
+
+/* PANEL HEADER */
+.panel-header{margin-bottom:24px;}
+.panel-eyebrow{
+  font-family:var(--mono);font-size:10px;color:var(--bnb);
+  text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;
+}
+.panel-title{
+  font-family:var(--mono);font-size:22px;font-weight:700;color:#fff;
+  margin-bottom:8px;line-height:1.2;
+}
+.panel-desc{
+  font-size:14px;color:var(--dim);line-height:1.6;max-width:600px;
+}
+
+/* CARDS */
+.card{
+  background:var(--s2);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px;
+  transition:border-color 0.2s;
+}
+.card:hover{border-color:var(--border2);}
+
+/* ━━━━ TOOL 1: FAUCET HUB ━━━━ */
+.wallet-row{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.wallet-input{
+  flex:1;min-width:240px;
+  background:var(--s1);
+  border:1px solid var(--border2);
+  border-radius:8px;
+  padding:11px 16px;
+  font-family:var(--mono);font-size:13px;color:#fff;
+  outline:none;transition:border 0.2s;
+}
+.wallet-input::placeholder{color:var(--dim);}
+.wallet-input:focus{border-color:var(--bnb);}
+.btn-sm{
+  background:transparent;
+  border:1px solid var(--border2);
+  border-radius:8px;
+  padding:11px 16px;
+  color:var(--dim);
+  font-family:var(--mono);font-size:12px;
+  cursor:pointer;transition:all 0.2s;white-space:nowrap;
+}
+.btn-sm:hover{border-color:var(--bnb);color:var(--bnb);}
+
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center;}
+.f-btn{
+  background:transparent;border:1px solid var(--border2);
+  border-radius:5px;padding:5px 12px;
+  font-family:var(--mono);font-size:11px;color:var(--dim);
+  cursor:pointer;transition:all 0.15s;
+}
+.f-btn:hover{border-color:var(--bnb);color:var(--bnb);}
+.f-btn.on{background:rgba(240,185,11,0.1);border-color:var(--bnb);color:var(--bnb);}
+
+.faucet-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:14px;
+}
+.faucet-card{
+  background:var(--s1);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px;
+  display:flex;flex-direction:column;gap:12px;
+  transition:all 0.2s;
+  position:relative;overflow:hidden;
+}
+.faucet-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--accent-line,transparent);
+}
+.faucet-card.no-req{--accent-line:var(--green);}
+.faucet-card.has-req{--accent-line:var(--amber);}
+.faucet-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+
+.fc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.fc-id{display:flex;align-items:center;gap:10px;}
+.fc-icon{
+  width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;flex-shrink:0;
+}
+.fc-name{font-weight:600;font-size:13px;color:#fff;line-height:1.3;}
+.fc-by{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:2px;}
+
+.spill{
+  font-family:var(--mono);font-size:10px;padding:3px 8px;
+  border-radius:20px;display:flex;align-items:center;gap:4px;
+  white-space:nowrap;flex-shrink:0;
+}
+.spill.on{background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.2);}
+.spill.chk{background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.2);}
+.spill.off{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2);}
+.spill-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+.spill.on .spill-dot{animation:glow 2s infinite;}
+
+.fc-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.fc-kv{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;}
+.fc-k{font-family:var(--mono);font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;}
+.fc-v{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--bnb);}
+.fc-v.muted{color:var(--dim);}
+
+.req-pills{display:flex;flex-wrap:wrap;gap:5px;}
+.req-pill{
+  font-family:var(--mono);font-size:10px;padding:3px 8px;
+  border-radius:4px;border:1px solid var(--border2);
+  background:rgba(255,255,255,0.03);color:var(--dim);
+}
+.req-pill.ok{color:var(--green);border-color:rgba(34,197,94,0.25);background:rgba(34,197,94,0.05);}
+.req-pill.warn{color:var(--amber);border-color:rgba(245,158,11,0.25);background:rgba(245,158,11,0.05);}
+
+.btn-claim{
+  display:block;width:100%;padding:10px;
+  border-radius:7px;
+  background:rgba(240,185,11,0.08);
+  border:1px solid rgba(240,185,11,0.25);
+  color:var(--bnb);
+  font-family:var(--mono);font-size:12px;font-weight:600;
+  text-align:center;text-decoration:none;cursor:pointer;
+  transition:all 0.2s;
+}
+.btn-claim:hover{background:rgba(240,185,11,0.16);border-color:var(--bnb);}
+
+/* ━━━━ TOOL 2: GAS TRACKER ━━━━ */
+.gas-hero{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+  margin-bottom:24px;
+}
+.gas-card{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.gas-card::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:var(--gc,var(--border));
+}
+.gas-card.slow{--gc:var(--blue);}
+.gas-card.std{--gc:var(--bnb);}
+.gas-card.fast{--gc:var(--green);}
+.gas-tier{font-family:var(--mono);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.gas-val{font-family:var(--mono);font-size:28px;font-weight:700;color:#fff;margin-bottom:2px;}
+.gas-unit{font-family:var(--mono);font-size:11px;color:var(--dim);}
+.gas-usd{font-family:var(--mono);font-size:12px;margin-top:6px;}
+.gas-usd.slow{color:var(--blue);}
+.gas-usd.std{color:var(--bnb);}
+.gas-usd.fast{color:var(--green);}
+
+.gas-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.info-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.info-label{font-family:var(--mono);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.info-value{font-family:var(--mono);font-size:18px;font-weight:700;color:#fff;}
+.info-sub{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:3px;}
+
+.btn-refresh{
+  background:var(--s2);border:1px solid var(--border2);
+  border-radius:7px;padding:9px 18px;
+  color:var(--bnb);font-family:var(--mono);font-size:12px;
+  cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;
+}
+.btn-refresh:hover{background:rgba(240,185,11,0.1);border-color:var(--bnb);}
+.btn-refresh.spinning .spin-icon{animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spin-icon{display:inline-block;}
+
+.gas-history{margin-top:20px;}
+.gh-label{font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;}
+.gh-bars{display:flex;align-items:flex-end;gap:4px;height:60px;}
+.gh-bar{
+  flex:1;background:rgba(240,185,11,0.2);border-radius:3px 3px 0 0;
+  min-height:4px;transition:height 0.3s;cursor:pointer;
+  position:relative;
+}
+.gh-bar:hover{background:rgba(240,185,11,0.5);}
+.gh-bar::after{
+  content:attr(data-tip);
+  position:absolute;bottom:110%;left:50%;transform:translateX(-50%);
+  background:var(--s3);border:1px solid var(--border2);
+  border-radius:4px;padding:3px 7px;
+  font-family:var(--mono);font-size:9px;color:var(--bnb);
+  white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.15s;
+}
+.gh-bar:hover::after{opacity:1;}
+
+/* ━━━━ TOOL 3: NETWORK HEALTH ━━━━ */
+.health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:24px;}
+.health-card{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;
+}
+.hc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.hc-name{font-family:var(--mono);font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;}
+.hc-status{
+  font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:3px;
+}
+.hc-status.ok{background:rgba(34,197,94,0.1);color:var(--green);}
+.hc-status.warn{background:rgba(245,158,11,0.1);color:var(--amber);}
+.hc-status.bad{background:rgba(239,68,68,0.1);color:var(--red);}
+.hc-val{font-family:var(--mono);font-size:22px;font-weight:700;color:#fff;}
+.hc-unit{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:2px;}
+
+.uptime-row{display:flex;gap:3px;margin-top:10px;}
+.up-seg{
+  flex:1;height:6px;border-radius:2px;
+  background:var(--green);opacity:0.8;
+}
+.up-seg.miss{background:var(--red);}
+.up-seg.warn{background:var(--amber);}
+
+.rpc-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;}
+.rpc-table th{
+  text-align:left;padding:8px 12px;
+  font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;
+  border-bottom:1px solid var(--border);
+}
+.rpc-table td{padding:10px 12px;border-bottom:1px solid var(--border);}
+.rpc-table tr:last-child td{border-bottom:none;}
+.rpc-table tr:hover td{background:rgba(255,255,255,0.02);}
+.ping-val{color:var(--green);}
+.ping-val.mid{color:var(--amber);}
+.ping-val.slow{color:var(--red);}
+.copy-link{color:var(--bnb);text-decoration:none;cursor:pointer;font-size:11px;}
+.copy-link:hover{text-decoration:underline;}
+
+/* ━━━━ TOOL 4: CONTRACT CHECKER ━━━━ */
+.input-group{margin-bottom:20px;}
+.ig-label{font-family:var(--mono);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.input-full{
+  width:100%;
+  background:var(--s1);border:1px solid var(--border2);
+  border-radius:8px;padding:12px 16px;
+  font-family:var(--mono);font-size:13px;color:#fff;
+  outline:none;transition:border 0.2s;
+}
+.input-full::placeholder{color:var(--dim);}
+.input-full:focus{border-color:var(--bnb);}
+.btn-primary{
+  background:var(--bnb);color:#000;
+  border:none;border-radius:8px;
+  padding:12px 24px;
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  cursor:pointer;transition:all 0.2s;
+}
+.btn-primary:hover{background:var(--bnb2);}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;}
+
+.result-box{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;
+  margin-top:20px;display:none;
+}
+.result-box.show{display:block;}
+.result-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:12px;
+}
+.result-row:last-child{border-bottom:none;}
+.rr-key{color:var(--dim);}
+.rr-val{color:#fff;text-align:right;}
+.rr-val.ok{color:var(--green);}
+.rr-val.warn{color:var(--amber);}
+.rr-val.bad{color:var(--red);}
+
+.contract-examples{
+  display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;
+}
+.eg-chip{
+  font-family:var(--mono);font-size:10px;
+  background:var(--s2);border:1px solid var(--border2);
+  border-radius:4px;padding:4px 10px;
+  color:var(--dim);cursor:pointer;transition:all 0.15s;
+}
+.eg-chip:hover{color:var(--bnb);border-color:var(--bnb);}
+
+/* ━━━━ TOOL 5: METAMASK CONFIG ━━━━ */
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;}
+.config-card{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;
+  cursor:pointer;transition:all 0.2s;
+}
+.config-card:hover,.config-card.selected{
+  border-color:var(--bnb);
+  background:rgba(240,185,11,0.05);
+}
+.config-card.selected .cc-check{display:flex;}
+.cc-top{display:flex;justify-content:space-between;margin-bottom:12px;}
+.cc-name{font-weight:600;font-size:14px;color:#fff;}
+.cc-type{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:3px;}
+.cc-type.testnet{background:rgba(245,158,11,0.1);color:var(--amber);}
+.cc-type.mainnet{background:rgba(34,197,94,0.1);color:var(--green);}
+.cc-check{
+  display:none;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--bnb);
+  align-items:center;justify-content:center;
+  font-size:11px;color:#000;flex-shrink:0;
+}
+.cc-params{display:flex;flex-direction:column;gap:5px;}
+.cc-p{font-family:var(--mono);font-size:11px;color:var(--dim);}
+.cc-p span{color:var(--text);}
+
+.param-table{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  margin-bottom:20px;
+}
+.pt-row{
+  display:grid;grid-template-columns:160px 1fr auto;
+  align-items:center;gap:12px;
+  padding:12px 16px;border-bottom:1px solid var(--border);
+}
+.pt-row:last-child{border-bottom:none;}
+.pt-key{font-family:var(--mono);font-size:11px;color:var(--dim);}
+.pt-val{font-family:var(--mono);font-size:12px;color:#fff;word-break:break-all;}
+.pt-copy{
+  background:transparent;border:1px solid var(--border2);
+  border-radius:4px;padding:3px 8px;
+  font-family:var(--mono);font-size:10px;color:var(--dim);
+  cursor:pointer;transition:all 0.15s;white-space:nowrap;
+}
+.pt-copy:hover{color:var(--bnb);border-color:var(--bnb);}
+
+.btn-add-mm{
+  background:linear-gradient(135deg,#F0B90B,#c99608);
+  color:#000;border:none;border-radius:8px;
+  padding:14px 28px;
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  cursor:pointer;transition:opacity 0.2s;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn-add-mm:hover{opacity:0.88;}
+
+/* ━━━━ TOAST ━━━━ */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--s2);border:1px solid var(--bnb);
+  border-radius:8px;padding:12px 18px;
+  font-family:var(--mono);font-size:12px;color:var(--bnb);
+  transform:translateY(80px);opacity:0;
+  transition:all 0.25s;z-index:9998;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* ━━━━ LOADING ━━━━ */
+.loading{
+  display:inline-block;width:14px;height:14px;
+  border:2px solid var(--border2);
+  border-top-color:var(--bnb);
+  border-radius:50%;animation:spin 0.6s linear infinite;
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform 0.3s;}
+  .sidebar.open{transform:translateX(0);}
+  .main-content{margin-left:0;}
+  .gas-hero{grid-template-columns:1fr;}
+  .config-grid{grid-template-columns:1fr;}
+  .gas-info-grid{grid-template-columns:1fr;}
+  .pt-row{grid-template-columns:1fr 1fr;}
+  .mobile-menu-btn{display:flex!important;}
+}
+.mobile-menu-btn{
+  display:none;
+  background:var(--s2);border:1px solid var(--border2);
+  border-radius:6px;padding:6px 10px;
+  color:var(--text);cursor:pointer;font-size:16px;
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-hex">B</div>
+      <div>
+        <div class="logo-name">BNB Dev Toolkit</div>
+      </div>
+    </div>
+    <div class="logo-chain">BSC Testnet · Chain 97</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Tools</div>
+    <div class="nav-item active" onclick="showPanel('faucet',this)">
+      <span class="nav-icon">🚰</span> Faucet Hub
+      <span class="nav-badge new">8</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('gas',this)">
+      <span class="nav-icon">⛽</span> Gas Tracker
+      <span class="nav-badge live">Live</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('health',this)">
+      <span class="nav-icon">📡</span> Network Health
+      <span class="nav-badge live">Live</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('contract',this)">
+      <span class="nav-icon">🔍</span> Contract Checker
+    </div>
+    <div class="nav-item" onclick="showPanel('config',this)">
+      <span class="nav-icon">🧰</span> MetaMask Config
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    Open-source DevTools<br>for BNB Chain builders.<br><br>
+    tBNB has no real value.<br>Testnet only.
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main-content">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-breadcrumb">BNB Dev Toolkit / <span id="breadcrumb">Faucet Hub</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="network-badge">
+        <div class="net-dot"></div>
+        BSC Testnet
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ PANEL 1: FAUCET HUB ════ -->
+  <div class="panel active" id="panel-faucet">
+    <div class="panel-header">
+      <div class="panel-eyebrow">// Tool 01</div>
+      <div class="panel-title">Faucet Hub</div>
+      <div class="panel-desc">All active tBNB faucets in one place. Check requirements, amounts, and claim status before switching tabs.</div>
+    </div>
+
+    <div class="wallet-row">
+      <input class="wallet-input" id="walletAddr" placeholder="0x... paste your BSC testnet wallet (optional)" oninput="renderFaucets()"/>
+      <button class="btn-sm" onclick="document.getElementById('walletAddr').value='';renderFaucets()">Clear</button>
+    </div>
+
+    <div class="filter-row">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;">Filter:</span>
+      <button class="f-btn on" id="fa-all" onclick="setFaucetFilter('all',this)">All</button>
+      <button class="f-btn" id="fa-noreq" onclick="setFaucetFilter('noreq',this)">No Requirements</button>
+      <button class="f-btn" id="fa-high" onclick="setFaucetFilter('high',this)">High Amount</button>
+      <button class="f-btn" id="fa-discord" onclick="setFaucetFilter('discord',this)">Discord</button>
+    </div>
+
+    <div class="faucet-grid" id="faucetGrid"></div>
+  </div>
+
+  <!-- ════ PANEL 2: GAS TRACKER ════ -->
+  <div class="panel" id="panel-gas">
+    <div class="panel-header">
+      <div class="panel-eyebrow">// Tool 02</div>
+      <div class="panel-title">Live Gas Tracker</div>
+      <div class="panel-desc">Real-time gas price tiers for BSC Testnet. Know what to set before you deploy.</div>
+    </div>
+
+    <div class="gas-hero">
+      <div class="gas-card slow">
+        <div class="gas-tier">🐢 Slow</div>
+        <div class="gas-val" id="g-slow">—</div>
+        <div class="gas-unit">Gwei</div>
+        <div class="gas-usd slow" id="g-slow-usd">~$0.000</div>
+      </div>
+      <div class="gas-card std">
+        <div class="gas-tier">⚡ Standard</div>
+        <div class="gas-val" id="g-std">—</div>
+        <div class="gas-unit">Gwei</div>
+        <div class="gas-usd std" id="g-std-usd">~$0.000</div>
+      </div>
+      <div class="gas-card fast">
+        <div class="gas-tier">🚀 Fast</div>
+        <div class="gas-val" id="g-fast">—</div>
+        <div class="gas-unit">Gwei</div>
+        <div class="gas-usd fast" id="g-fast-usd">~$0.000</div>
+      </div>
+    </div>
+
+    <div class="gas-info-grid">
+      <div class="info-card">
+        <div class="info-label">Latest Block</div>
+        <div class="info-value" id="g-block">—</div>
+        <div class="info-sub">BSC Testnet</div>
+      </div>
+      <div class="info-card">
+        <div class="info-label">Block Time</div>
+        <div class="info-value">~3s</div>
+        <div class="info-sub">Average confirmation</div>
+      </div>
+    </div>
+
+    <button class="btn-refresh" id="gasRefreshBtn" onclick="fetchGasData()">
+      <span class="spin-icon">↻</span> Refresh Gas Data
+    </button>
+
+    <div class="gas-history">
+      <div class="gh-label">Gas History (last 20 polls)</div>
+      <div class="gh-bars" id="gasHistory"></div>
+    </div>
+  </div>
+
+  <!-- ════ PANEL 3: NETWORK HEALTH ════ -->
+  <div class="panel" id="panel-health">
+    <div class="panel-header">
+      <div class="panel-eyebrow">// Tool 03</div>
+      <div class="panel-title">Network Health Monitor</div>
+      <div class="panel-desc">Live stats for BSC Testnet. Monitor block production, TPS, and RPC endpoint latency.</div>
+    </div>
+
+    <div class="health-grid">
+      <div class="health-card">
+        <div class="hc-top">
+          <div class="hc-name">Block Height</div>
+          <div class="hc-status ok" id="hh-block-status">Synced</div>
+        </div>
+        <div class="hc-val" id="hh-block">—</div>
+        <div class="hc-unit">Latest Block</div>
+        <div class="uptime-row" id="hh-block-bars"></div>
+      </div>
+      <div class="health-card">
+        <div class="hc-top">
+          <div class="hc-name">RPC Latency</div>
+          <div class="hc-status ok" id="hh-ping-status">Fast</div>
+        </div>
+        <div class="hc-val" id="hh-ping">—</div>
+        <div class="hc-unit">ms response time</div>
+        <div class="uptime-row" id="hh-ping-bars"></div>
+      </div>
+      <div class="health-card">
+        <div class="hc-top">
+          <div class="hc-name">Peer Count</div>
+          <div class="hc-status ok">Active</div>
+        </div>
+        <div class="hc-val" id="hh-peers">—</div>
+        <div class="hc-unit">Connected peers</div>
+        <div class="uptime-row" id="hh-peer-bars"></div>
+      </div>
+      <div class="health-card">
+        <div class="hc-top">
+          <div class="hc-name">Chain ID</div>
+          <div class="hc-status ok">Verified</div>
+        </div>
+        <div class="hc-val">97</div>
+        <div class="hc-unit">BSC Testnet</div>
+        <div class="uptime-row">
+          <div class="up-seg"></div><div class="up-seg"></div><div class="up-seg"></div>
+          <div class="up-seg"></div><div class="up-seg"></div><div class="up-seg"></div>
+          <div class="up-seg"></div><div class="up-seg"></div><div class="up-seg"></div>
+          <div class="up-seg"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Public RPC Endpoints</div>
+      <table class="rpc-table">
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Latency</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="rpcTableBody"></tbody>
+      </table>
+    </div>
+
+    <button class="btn-refresh" onclick="fetchHealthData()">
+      <span class="spin-icon">↻</span> Refresh Health Data
+    </button>
+  </div>
+
+  <!-- ════ PANEL 4: CONTRACT CHECKER ════ -->
+  <div class="panel" id="panel-contract">
+    <div class="panel-header">
+      <div class="panel-eyebrow">// Tool 04</div>
+      <div class="panel-title">Contract Checker</div>
+      <div class="panel-desc">Verify a contract address on BSC Testnet. Check if it's deployed, get bytecode size, and view basic metadata.</div>
+    </div>
+
+    <div class="input-group">
+      <div class="ig-label">Contract Address</div>
+      <input class="input-full" id="contractAddr" placeholder="0x... enter BSC testnet contract address"/>
+      <div class="contract-examples">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--dim);align-self:center;">Try:</span>
+        <div class="eg-chip" onclick="useExample('0x0000000000000000000000000000000000001000')">System Contract</div>
+        <div class="eg-chip" onclick="useExample('0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd')">WBNB Testnet</div>
+        <div class="eg-chip" onclick="useExample('0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee')">BUSD Testnet</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="checkContract()" id="checkBtn">Check Contract</button>
+
+    <div class="result-box" id="contractResult">
+      <div class="result-row">
+        <span class="rr-key">Address</span>
+        <span class="rr-val" id="cr-addr">—</span>
+      </div>
+      <div class="result-row">
+        <span class="rr-key">Status</span>
+        <span class="rr-val" id="cr-status">—</span>
+      </div>
+      <div class="result-row">
+        <span class="rr-key">Bytecode Size</span>
+        <span class="rr-val" id="cr-size">—</span>
+      </div>
+      <div class="result-row">
+        <span class="rr-key">Balance</span>
+        <span class="rr-val" id="cr-balance">—</span>
+      </div>
+      <div class="result-row">
+        <span class="rr-key">Transaction Count</span>
+        <span class="rr-val" id="cr-txcount">—</span>
+      </div>
+      <div class="result-row">
+        <span class="rr-key">Network</span>
+        <span class="rr-val ok">BSC Testnet (Chain 97)</span>
+      </div>
+      <div style="margin-top:14px;">
+        <a id="cr-explorer-link" href="#" target="_blank" style="font-family:var(--mono);font-size:12px;color:var(--bnb);text-decoration:none;">
+          → View on BSCScan Testnet ↗
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ PANEL 5: METAMASK CONFIG ════ -->
+  <div class="panel" id="panel-config">
+    <div class="panel-header">
+      <div class="panel-eyebrow">// Tool 05</div>
+      <div class="panel-title">MetaMask Config</div>
+      <div class="panel-desc">One-click network setup. Select a network and add it to MetaMask instantly — no manual typing.</div>
+    </div>
+
+    <div class="config-grid" id="networkCards"></div>
+
+    <div style="font-family:var(--mono);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Network Parameters</div>
+    <div class="param-table" id="paramTable"></div>
+
+    <button class="btn-add-mm" onclick="addToMetaMask()">
+      🦊 Add to MetaMask
+    </button>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:10px;">
+      Requires MetaMask browser extension. Mobile: use MetaMask in-app browser.
+    </div>
+  </div>
+
+</div><!-- end main-content -->
+</div><!-- end app-shell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// NAVIGATION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const PANEL_NAMES = {
+  faucet:'Faucet Hub', gas:'Gas Tracker',
+  health:'Network Health', contract:'Contract Checker', config:'MetaMask Config'
+};
+
+function showPanel(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('breadcrumb').textContent = PANEL_NAMES[id];
+  document.getElementById('sidebar').classList.remove('open');
+  if(id==='gas') fetchGasData();
+  if(id==='health') fetchHealthData();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// FAUCET DATA
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const FAUCETS = [
+  {name:'Official BNB Faucet',provider:'BNB Chain',icon:'⬡',bg:'#1a1e0d',
+   url:'https://www.bnbchain.org/en/testnet-faucet',
+   amount:'0.3 tBNB',amt:0.3,cd:'24h',status:'on',
+   reqs:['GitHub Account','Login Required'],type:'has-req',tags:[]},
+  {name:'QuickNode Faucet',provider:'QuickNode',icon:'⚡',bg:'#0d1a1a',
+   url:'https://faucet.quicknode.com/binance-smart-chain/bnb-testnet',
+   amount:'0.1 tBNB',amt:0.1,cd:'12h',status:'on',
+   reqs:['Wallet Connect'],type:'has-req',tags:[]},
+  {name:'Chainlink Faucet',provider:'Chainlink',icon:'🔗',bg:'#0d0d1a',
+   url:'https://faucets.chain.link/bnb-chain-testnet',
+   amount:'0.1 tBNB',amt:0.1,cd:'24h',status:'on',
+   reqs:['1 LINK on Mainnet'],type:'has-req',tags:[]},
+  {name:'Bitbond Token Tool',provider:'Bitbond',icon:'🔧',bg:'#1a0d0d',
+   url:'https://tokentool.bitbond.com/faucet/bsc-testnet',
+   amount:'0.01 tBNB',amt:0.01,cd:'24h',status:'on',
+   reqs:['No requirements'],type:'no-req',tags:['noreq']},
+  {name:'Chainstack Faucet',provider:'Chainstack',icon:'📡',bg:'#0d1a0d',
+   url:'https://faucet.chainstack.com/bnb-testnet-faucet',
+   amount:'0.05 tBNB',amt:0.05,cd:'24h',status:'on',
+   reqs:['Free Account'],type:'has-req',tags:[]},
+  {name:'Triangle Faucet',provider:'Triangle Platform',icon:'△',bg:'#1a1a0d',
+   url:'https://faucet.triangleplatform.com/bnbsmartchain/testnet',
+   amount:'0.05 tBNB',amt:0.05,cd:'24h',status:'on',
+   reqs:['No requirements'],type:'no-req',tags:['noreq']},
+  {name:'BNB Discord Faucet',provider:'BNB Chain Discord',icon:'💬',bg:'#0d0d1a',
+   url:'https://discord.com/invite/bnbchain',
+   amount:'0.1 tBNB',amt:0.1,cd:'24h',status:'on',
+   reqs:['Discord Account','Join Server'],type:'has-req',tags:['discord']},
+  {name:'GHOST Faucet',provider:'GhostChain',icon:'👻',bg:'#150d1a',
+   url:'https://blog.ghostchain.io/top-5-bnb-faucets/',
+   amount:'0.1 tBNB',amt:0.1,cd:'24h',status:'chk',
+   reqs:['No requirements'],type:'no-req',tags:['noreq']},
+];
+
+let faucetFilter = 'all';
+
+function setFaucetFilter(f, btn) {
+  faucetFilter = f;
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderFaucets();
+}
+
+function renderFaucets() {
+  const wallet = document.getElementById('walletAddr').value.trim();
+  let list = [...FAUCETS];
+  if(faucetFilter==='noreq') list = list.filter(f=>f.type==='no-req');
+  if(faucetFilter==='high')  list = list.filter(f=>f.amt>=0.1);
+  if(faucetFilter==='discord') list = list.filter(f=>f.tags.includes('discord'));
+
+  document.getElementById('faucetGrid').innerHTML = list.map(f=>`
+    <div class="faucet-card ${f.type}">
+      <div class="fc-top">
+        <div class="fc-id">
+          <div class="fc-icon" style="background:${f.bg}">${f.icon}</div>
+          <div>
+            <div class="fc-name">${f.name}</div>
+            <div class="fc-by">${f.provider}</div>
+          </div>
+        </div>
+        <div class="spill ${f.status}">
+          <div class="spill-dot"></div>
+          ${f.status==='on'?'Online':f.status==='chk'?'Verify':'Offline'}
+        </div>
+      </div>
+      <div class="fc-meta">
+        <div class="fc-kv"><div class="fc-k">Amount</div><div class="fc-v">${f.amount}</div></div>
+        <div class="fc-kv"><div class="fc-k">Cooldown</div><div class="fc-v muted">${f.cd}</div></div>
+      </div>
+      <div class="req-pills">
+        ${f.reqs.map(r=>`<span class="req-pill ${r==='No requirements'?'ok':'warn'}">${r}</span>`).join('')}
+      </div>
+      <a class="btn-claim" href="${f.url}" target="_blank" rel="noopener">
+        ${wallet?'→ Claim tBNB':'→ Open Faucet'}
+      </a>
+    </div>
+  `).join('');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// GAS TRACKER
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const BSC_RPC = 'https://bsc-testnet-rpc.publicnode.com';
+let gasHistory = [];
+
+async function rpcCall(method, params=[]) {
+  const r = await fetch(BSC_RPC, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({jsonrpc:'2.0',method,params,id:1})
+  });
+  const d = await r.json();
+  if(d.error) throw new Error(d.error.message);
+  return d.result;
+}
+
+async function fetchGasData() {
+  const btn = document.getElementById('gasRefreshBtn');
+  btn.classList.add('spinning');
+  try {
+    const [gasHex, blockHex] = await Promise.all([
+      rpcCall('eth_gasPrice'),
+      rpcCall('eth_blockNumber')
+    ]);
+    const gwei = parseInt(gasHex,16)/1e9;
+    const block = parseInt(blockHex,16);
+
+    document.getElementById('g-slow').textContent  = gwei.toFixed(2);
+    document.getElementById('g-std').textContent   = (gwei*1.1).toFixed(2);
+    document.getElementById('g-fast').textContent  = (gwei*1.25).toFixed(2);
+    document.getElementById('g-slow-usd').textContent  = `~$${(gwei*21000*0.00000000001*300).toFixed(5)}`;
+    document.getElementById('g-std-usd').textContent   = `~$${(gwei*1.1*21000*0.00000000001*300).toFixed(5)}`;
+    document.getElementById('g-fast-usd').textContent  = `~$${(gwei*1.25*21000*0.00000000001*300).toFixed(5)}`;
+    document.getElementById('g-block').textContent = block.toLocaleString();
+
+    gasHistory.push(gwei);
+    if(gasHistory.length>20) gasHistory.shift();
+    renderGasHistory();
+    showToast('Gas data updated ✓');
+  } catch(e) {
+    showToast('RPC error — check connection');
+  }
+  btn.classList.remove('spinning');
+}
+
+function renderGasHistory() {
+  const max = Math.max(...gasHistory,1);
+  document.getElementById('gasHistory').innerHTML = gasHistory.map((v,i)=>{
+    const h = Math.max(4, Math.round((v/max)*56));
+    return `<div class="gh-bar" style="height:${h}px" data-tip="${v.toFixed(2)} Gwei"></div>`;
+  }).join('');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// NETWORK HEALTH
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const RPCS = [
+  {name:'publicnode.com', url:'https://bsc-testnet-rpc.publicnode.com'},
+  {name:'bnbchain.org',   url:'https://data-seed-prebsc-1-s1.bnbchain.org:8545'},
+  {name:'ankr.com',       url:'https://rpc.ankr.com/bsc_testnet_chapel'},
+];
+let blockHistory = [], pingHistory = [], peerHistory = [];
+
+function makeBars(arr, max) {
+  return Array(10).fill(0).map((_,i)=>{
+    const v = arr[arr.length-10+i];
+    if(v===undefined) return `<div class="up-seg" style="opacity:0.2"></div>`;
+    const ratio = v/max;
+    const cls = ratio>0.8?'':'warn';
+    return `<div class="up-seg ${cls}"></div>`;
+  }).join('');
+}
+
+async function fetchHealthData() {
+  try {
+    const t0 = Date.now();
+    const [blockHex, peerHex] = await Promise.all([
+      rpcCall('eth_blockNumber'),
+      rpcCall('net_peerCount').catch(()=>'0x0')
+    ]);
+    const ping = Date.now()-t0;
+    const block = parseInt(blockHex,16);
+    const peers = parseInt(peerHex,16);
+
+    blockHistory.push(block); if(blockHistory.length>10) blockHistory.shift();
+    pingHistory.push(ping);   if(pingHistory.length>10)  pingHistory.shift();
+    peerHistory.push(peers);  if(peerHistory.length>10)  peerHistory.shift();
+
+    document.getElementById('hh-block').textContent = block.toLocaleString();
+    document.getElementById('hh-ping').textContent  = ping;
+    document.getElementById('hh-peers').textContent = peers||'N/A';
+
+    const pingStatus = ping<300?'ok':ping<800?'warn':'bad';
+    const pingLabel  = ping<300?'Fast':ping<800?'Moderate':'Slow';
+    document.getElementById('hh-ping-status').className = `hc-status ${pingStatus}`;
+    document.getElementById('hh-ping-status').textContent = pingLabel;
+
+    document.getElementById('hh-block-bars').innerHTML = makeBars(blockHistory.map((_,i,a)=>i?a[i]-a[i-1]:1), 5);
+    document.getElementById('hh-ping-bars').innerHTML  = makeBars(pingHistory.map(v=>Math.max(0,500-v)),500);
+    document.getElementById('hh-peer-bars').innerHTML  = makeBars(peerHistory, Math.max(...peerHistory,1));
+
+    // RPC table
+    const rows = await Promise.all(RPCS.map(async rpc=>{
+      const t = Date.now();
+      let lat='—', st='ok';
+      try {
+        await fetch(rpc.url,{method:'POST',headers:{'Content-Type':'application/json'},body:'{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'});
+        lat = Date.now()-t;
+        st = lat<300?'ok':lat<700?'mid':'slow';
+      } catch{ st='slow'; lat='Timeout'; }
+      return `<tr>
+        <td><span style="color:var(--text)">${rpc.name}</span><br><span style="font-size:10px;color:var(--dim)">${rpc.url.slice(0,38)}...</span></td>
+        <td><span class="ping-val ${st}">${lat}${typeof lat==='number'?'ms':''}</span></td>
+        <td><span class="spill ${st==='ok'?'on':'chk'}" style="display:inline-flex"><span class="spill-dot"></span>${st==='ok'?'Online':'Check'}</span></td>
+        <td><span class="copy-link" onclick="copyText('${rpc.url}')">Copy</span></td>
+      </tr>`;
+    }));
+    document.getElementById('rpcTableBody').innerHTML = rows.join('');
+    showToast('Health data updated ✓');
+  } catch(e) {
+    showToast('RPC error — check connection');
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CONTRACT CHECKER
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function useExample(addr) {
+  document.getElementById('contractAddr').value = addr;
+}
+
+async function checkContract() {
+  const addr = document.getElementById('contractAddr').value.trim();
+  if(!addr||!addr.startsWith('0x')||addr.length!==42) {
+    showToast('Enter a valid 0x address (42 chars)'); return;
+  }
+  const btn = document.getElementById('checkBtn');
+  btn.disabled=true; btn.textContent='Checking...';
+  try {
+    const [code, balHex, txCountHex] = await Promise.all([
+      rpcCall('eth_getCode',[addr,'latest']),
+      rpcCall('eth_getBalance',[addr,'latest']),
+      rpcCall('eth_getTransactionCount',[addr,'latest'])
+    ]);
+    const isContract = code && code!=='0x' && code.length>2;
+    const bal = (parseInt(balHex,16)/1e18).toFixed(6);
+    const txCount = parseInt(txCountHex,16);
+    const byteSize = isContract ? Math.floor((code.length-2)/2)+' bytes' : 'N/A (EOA)';
+
+    document.getElementById('cr-addr').textContent      = addr.slice(0,10)+'...'+addr.slice(-8);
+    document.getElementById('cr-status').className      = 'rr-val '+(isContract?'ok':'warn');
+    document.getElementById('cr-status').textContent    = isContract?'✓ Contract Deployed':'⚠ Wallet Address (EOA)';
+    document.getElementById('cr-size').textContent      = byteSize;
+    document.getElementById('cr-balance').textContent   = bal+' tBNB';
+    document.getElementById('cr-txcount').textContent   = txCount+' transactions';
+    document.getElementById('cr-explorer-link').href    = `https://testnet.bscscan.com/address/${addr}`;
+    document.getElementById('contractResult').classList.add('show');
+  } catch(e) {
+    showToast('Error: '+e.message);
+  }
+  btn.disabled=false; btn.textContent='Check Contract';
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// METAMASK CONFIG
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const NETWORKS = [
+  {id:'bsc-testnet', name:'BSC Testnet', type:'testnet',
+   chainId:'0x61', chainIdDec:97,
+   rpc:'https://bsc-testnet-rpc.publicnode.com',
+   symbol:'tBNB', decimals:18,
+   explorer:'https://testnet.bscscan.com'},
+  {id:'bsc-mainnet', name:'BSC Mainnet', type:'mainnet',
+   chainId:'0x38', chainIdDec:56,
+   rpc:'https://bsc-rpc.publicnode.com',
+   symbol:'BNB', decimals:18,
+   explorer:'https://bscscan.com'},
+  {id:'opbnb-testnet', name:'opBNB Testnet', type:'testnet',
+   chainId:'0x15EB', chainIdDec:5611,
+   rpc:'https://opbnb-testnet-rpc.publicnode.com',
+   symbol:'tBNB', decimals:18,
+   explorer:'https://opbnb-testnet.bscscan.com'},
+  {id:'opbnb-mainnet', name:'opBNB Mainnet', type:'mainnet',
+   chainId:'0xCC', chainIdDec:204,
+   rpc:'https://opbnb-rpc.publicnode.com',
+   symbol:'BNB', decimals:18,
+   explorer:'https://opbnb.bscscan.com'},
+];
+let selectedNetwork = NETWORKS[0];
+
+function renderNetworkCards() {
+  document.getElementById('networkCards').innerHTML = NETWORKS.map(n=>`
+    <div class="config-card ${n.id===selectedNetwork.id?'selected':''}" onclick="selectNetwork('${n.id}')">
+      <div class="cc-top">
+        <div>
+          <div class="cc-name">${n.name}</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:3px;">Chain ID: ${n.chainIdDec}</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:6px;">
+          <span class="cc-type ${n.type}">${n.type}</span>
+          <div class="cc-check">${n.id===selectedNetwork.id?'✓':''}</div>
+        </div>
+      </div>
+      <div class="cc-params">
+        <div class="cc-p">Symbol: <span>${n.symbol}</span></div>
+        <div class="cc-p">RPC: <span>${n.rpc.slice(8,32)}...</span></div>
+      </div>
+    </div>
+  `).join('');
+
+  const net = selectedNetwork;
+  document.getElementById('paramTable').innerHTML = [
+    ['Network Name', net.name],
+    ['RPC URL', net.rpc],
+    ['Chain ID (Hex)', net.chainId],
+    ['Chain ID (Dec)', net.chainIdDec],
+    ['Currency Symbol', net.symbol],
+    ['Decimals', net.decimals],
+    ['Block Explorer', net.explorer],
+  ].map(([k,v])=>`
+    <div class="pt-row">
+      <div class="pt-key">${k}</div>
+      <div class="pt-val">${v}</div>
+      <button class="pt-copy" onclick="copyText('${v}')">Copy</button>
+    </div>
+  `).join('');
+}
+
+function selectNetwork(id) {
+  selectedNetwork = NETWORKS.find(n=>n.id===id);
+  renderNetworkCards();
+}
+
+async function addToMetaMask() {
+  if(!window.ethereum) { showToast('MetaMask not detected. Install the extension first.'); return; }
+  const net = selectedNetwork;
+  try {
+    await window.ethereum.request({
+      method: 'wallet_addEthereumChain',
+      params:[{
+        chainId: net.chainId,
+        chainName: net.name,
+        nativeCurrency:{ name:net.symbol, symbol:net.symbol, decimals:net.decimals },
+        rpcUrls:[net.rpc],
+        blockExplorerUrls:[net.explorer]
+      }]
+    });
+    showToast(net.name+' added to MetaMask ✓');
+  } catch(e) {
+    showToast('Error: '+(e.message||'User rejected'));
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// UTILS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function copyText(t) {
+  navigator.clipboard.writeText(String(t))
+    .then(()=>showToast('Copied ✓'))
+    .catch(()=>showToast('Copy failed'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2300);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// INIT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+renderFaucets();
+renderNetworkCards();
+</script>
+</body>
+</html>
